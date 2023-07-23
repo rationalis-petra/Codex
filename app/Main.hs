@@ -13,7 +13,9 @@ import Glint.Render.Html
   
 
 data Options = Options { input_file :: String
-                       , output_file :: String }
+                       , output_file :: String
+                       , document_root :: String
+                       }
 
 opts :: Parser Options
 opts = Options
@@ -26,6 +28,11 @@ opts = Options
     <> short 'o'
     <> help "Specify an (output) filename. Leave empty to deduce from input filename"
     <> value "" )
+  <*> strOption
+    ( long "document-root"
+    <> short 'r'
+    <> help "Specify a path that is the document root."
+    <> value "." )
 
   
 main :: IO ()
@@ -36,11 +43,11 @@ main = do
     <> header "An implementation of the Glint Markup Langauge")
   infile <- readFile $ input_file options
 
-  case runParser glint (pack $ input_file options) (pack infile) of 
+  case runParser glint_doc (pack $ input_file options) (pack infile) of 
     Right val ->
-      case runExcept (process val) of 
+      case runExcept (process_doc val) of 
         Right val -> 
-          writeFile (output_file options) (renderHtml $ render_doc val)
+          writeFile (output_file options) (renderHtml $ render_doc (document_root options) val)
         Left err -> putDocLn err
     Left err -> putDocLn err
 

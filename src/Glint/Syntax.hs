@@ -3,6 +3,7 @@ module Glint.Syntax
   , GlintDocument(..)
   , GlintDoc(..)
   , TextProperty(..)
+  , Link(..)
   ) where
 
 import Data.Text (Text)
@@ -32,25 +33,37 @@ instance Pretty TextProperty where
 
 data GlintDocument = GlintDocument  
   { title :: Text
-  , body :: GlintDoc }
+  , body :: [GlintDoc] }
+
+data Link = DocLink Text | URLLink Text
+  deriving (Show, Ord, Eq)
 
 data GlintDoc 
-  -- Basic text & document structure
-  = Text TextProperty Text
+  -- structrue
+  = Section Text [GlintDoc]
+  | Title Text
   | Paragraph [GlintDoc]
-  | Section Text [GlintDoc]
+  -- Basic eleents of text & document structure
+  | Text TextProperty Text
+  | Ref Link Text
 
   -- Math/Tex
   | InlMath Text
   | BlockMath Text
 
   -- Definitions, Examples
-  | Definition Text GlintDoc
-  | Example (Maybe Text) (Maybe Text) GlintDoc
+  | Definition Text [GlintDoc]
+  | Example (Maybe Text) (Maybe Text) [GlintDoc]
+  | Proposition Text [GlintDoc]
+  | Proof (Maybe Text) [GlintDoc]
 
   -- Lists, bool = ordered/unordered
-  | List Bool [GlintDoc]
+  | List Bool [[GlintDoc]]
   | PList [(Text, GlintDoc)]
+
+  -- Tags
+  | Tag Text [GlintDoc]
+
   deriving (Eq, Ord, Show)
 
 instance Pretty GlintDoc where
