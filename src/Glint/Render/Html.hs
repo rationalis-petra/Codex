@@ -41,7 +41,7 @@ render' depth root doc = case doc of
   Title text -> H.h1 $ toHtml text 
 
   Section title nodes ->
-    H.p $ do 
+    H.div ! A.class_ "section" $ do 
       (header_n depth) (toHtml title)
       mapM_ (render' (depth + 1) root) nodes
   Paragraph nodes -> H.p $ mapM_ (render' depth root) nodes
@@ -82,12 +82,17 @@ render' depth root doc = case doc of
       mapM_ (render' depth root) children
   Proof _ children -> 
     H.p $ do
-      H.i "Proof"
+      H.i "Proof: "
       mapM_ (render' depth root) children
   InlMath text -> 
     H.span ! A.class_ "math" $ toHtml ("\\(" <> text <> "\\)")
   BlockMath text -> 
     H.p ! A.class_ "math" $ toHtml ("\\[" <> text <> "\\]")
+
+  Bib refs -> 
+    H.div $ do
+      H.h2 "Bibliography"
+      H.ul $ mapM_ (H.li . toHtml) refs
   
 
 header_n :: Int -> Html -> Html 

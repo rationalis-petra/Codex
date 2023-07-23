@@ -63,6 +63,9 @@ data GlintDoc
   -- Tags
   | Tag Text [GlintDoc]
 
+  -- bibliography (move into document?)
+  | Bib [Text]
+
   deriving (Eq, Ord, Show)
 
 instance Pretty GlintDoc where

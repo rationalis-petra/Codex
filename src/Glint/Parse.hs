@@ -6,7 +6,8 @@ module Glint.Parse
   , runParser
   ) where
 
-import Data.Text (Text, pack, unpack)
+import qualified Data.Text as Text
+import Data.Text (Text, pack, unpack, singleton)
 
 import qualified Text.Megaparsec.Char.Lexer as L
 import qualified Text.Megaparsec as Megaparsec
@@ -46,11 +47,12 @@ glint = do
   name <- glname
   args <- pargs
   kwargs <- try pkwargs <|> pure []
+  -- TODO: preserve whitespace, for if text needs it 
   _ <- lexeme $ char '|'
-  body <- many (try (Left <$> glint)
-                <|> (Right <$> non_block_str))
+  body <- many (try (Right <$> delimiters len)
+                <|> (Left <$> glint))
     
-  _ <- parsen (char ']') len
+  _ <- lexeme $ parsen (char ']') len
   pure $ Node name args kwargs body
 
 glname :: Parser Text
@@ -71,12 +73,33 @@ pkwargs = do
   _ <- lexeme $ char ',' 
   many ((,) <$> arg_str <*> (lexeme (char '=') *> arg_str))
 
-non_block_str :: Parser Text
-non_block_str = pack <$> many1 (satisfy (\v -> (v /= ']') && (v /= '[')))
-
--- delimiters :: Int -> Parser Text
--- delimiters =
+-- non_block_str :: Parser Text
+-- non_block_str =  
 --   pack <$> many1 (satisfy (\v -> (v /= ']') && (v /= '[')))
+
+delimiters :: Int -> Parser Text
+delimiters n = loop n ""   where 
+    loop :: Int -> Text -> Parser Text
+    loop n txt = do
+      val  <- (try $ do
+        cs <- many (satisfy (== '['))
+        case cs of
+          [] -> do
+            cs' <- many (satisfy (== ']'))
+            case cs' of
+              [] -> Just . singleton <$> satisfy (const True)
+              _ | length cs' < n -> pure $ Just $ pack cs'
+                | otherwise -> fail "rbrace"
+          _ | length cs < n -> pure $ Just $ pack cs
+            | otherwise -> fail "lbrace")
+             <|> pure Nothing
+      case val of
+        Just txt' -> loop n (txt <> txt')
+        Nothing ->
+          if Text.null txt
+          then fail "delimiters"
+          else pure (" " <> txt) -- this is a hack; we need to make it so
+               -- whitespace-only is ignored as 'not text'
 
 parsen :: Parser a -> Int -> Parser [a]
 parsen p n = case n of

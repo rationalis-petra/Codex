@@ -55,6 +55,7 @@ process (Node typ args kwargs body) =
     "ol" -> List True <$> get_list_els body
     "ul" -> List False <$> get_list_els body
     -- dl
+    "bib" -> Bib <$> get_bib_els body
 
     _ -> case uncons typ of 
       Just ('#', tl) -> Tag tl <$> get_subnodes body
@@ -77,6 +78,14 @@ process (Node typ args kwargs body) =
         get_el node = case node of 
           (Node "li" args _ body) -> ((,) (listToMaybe args) <$> get_subnodes body)
           _ -> throwError ("expected list item, got:" <+> pretty node)
+
+    get_bib_els :: [Either GlnRaw Text] -> m [Text]
+    get_bib_els = mapM (either get_el (throwError . ("Exptected bibrfef element, got text:" <+>) . pretty))
+      where
+        get_el :: GlnRaw -> m Text
+        get_el node = case node of 
+          (Node "bibref" _ _ body) -> get_text body
+          _ -> throwError ("expected bibref element, got:" <+> pretty node)
 
     get_arg :: Int -> [a] -> m a
     get_arg 0 (s:_) = pure s
