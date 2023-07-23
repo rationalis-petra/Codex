@@ -58,8 +58,7 @@ data GlintDoc
   | Proof (Maybe Text) [GlintDoc]
 
   -- Lists, bool = ordered/unordered
-  | List Bool [[GlintDoc]]
-  | PList [(Text, GlintDoc)]
+  | List Bool [(Maybe Text, [GlintDoc])]
 
   -- Tags
   | Tag Text [GlintDoc]

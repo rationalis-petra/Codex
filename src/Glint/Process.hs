@@ -70,12 +70,12 @@ process (Node typ args kwargs body) =
     get_subnodes =
       mapM (either process (pure . Text Regular))
 
-    get_list_els :: [Either GlnRaw Text] -> m [[GlintDoc]]
+    get_list_els :: [Either GlnRaw Text] -> m [(Maybe Text, [GlintDoc])]
     get_list_els = mapM (either get_el (throwError . ("Exptected list element, got text:" <+>) . pretty))
       where
-        get_el :: GlnRaw -> m [GlintDoc]
+        get_el :: GlnRaw -> m (Maybe Text, [GlintDoc])
         get_el node = case node of 
-          (Node "li" _ _ body) -> get_subnodes body
+          (Node "li" args _ body) -> ((,) (listToMaybe args) <$> get_subnodes body)
           _ -> throwError ("expected list item, got:" <+> pretty node)
 
     get_arg :: Int -> [a] -> m a

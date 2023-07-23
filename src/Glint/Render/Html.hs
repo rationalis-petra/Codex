@@ -19,9 +19,13 @@ render_doc root (GlintDocument {..}) = html $ do
       ! A.id "MathJax-script"
       ! A.src "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
       $ pure ()
+    H.style $
+      "a {color: #83accc}" >>
+      "body {position: relative; width: 50%; left: 25%; color: #a8a7ab; background-color: #212025}" >>
+      ".tag {color: #aa4040}"
     H.script $ do 
       "MathJax = {processClass : 'math'} "
-  H.body ! A.style "position: relative; width: 50%; left: 25%" $ mapM_ (render root) body
+  H.body $ mapM_ (render root) body
 
 render :: String -> GlintDoc -> Html
 render = render' 1 . pack
@@ -44,13 +48,15 @@ render' depth root doc = case doc of
 
   List b children -> 
     (if b then H.ol else H.ul) $ do
-      let render_child children = 
-            H.li $ mapM_ (render' depth root) children
+      let render_child (mtitle, children) = 
+            H.li $ do
+              maybe (pure ()) (H.b . toHtml . (<> ": ")) mtitle  
+              mapM_ (render' depth root) children
       mapM_ render_child children
 
   Tag typ children ->  
     H.p $ do
-      H.b ! A.style "color: red" $ (toHtml typ)
+      H.b ! A.class_ "tag" $ toHtml (typ <> ": ")
       mapM_ (render' depth root) children
 
   Ref link text -> 
@@ -82,9 +88,6 @@ render' depth root doc = case doc of
     H.span ! A.class_ "math" $ toHtml ("\\(" <> text <> "\\)")
   BlockMath text -> 
     H.p ! A.class_ "math" $ toHtml ("\\[" <> text <> "\\]")
-
-      
-  _ -> H.p "unknown doc" 
   
 
 header_n :: Int -> Html -> Html 
