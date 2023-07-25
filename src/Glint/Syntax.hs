@@ -2,6 +2,7 @@ module Glint.Syntax
   ( GlnRaw(..)
   , GlintDocument(..)
   , GlintDoc(..)
+  , Lang(..)
   , TextProperty(..)
   , Link(..)
   ) where
@@ -38,14 +39,19 @@ data GlintDocument = GlintDocument
 data Link = DocLink Text | URLLink Text
   deriving (Show, Ord, Eq)
 
+data Lang = Graphviz
+  deriving (Show, Eq, Ord)
+
 data GlintDoc 
   -- structrue
   = Section Text [GlintDoc]
   | Title Text
   | Paragraph [GlintDoc]
+  | Quote Text (Maybe Text)
   -- Basic eleents of text & document structure
   | Text TextProperty Text
   | Ref Link Text
+  | Linebreak
 
   -- Math/Tex
   | InlMath Text
@@ -54,7 +60,8 @@ data GlintDoc
   -- Definitions, Examples
   | Definition Text [GlintDoc]
   | Example (Maybe Text) (Maybe Text) [GlintDoc]
-  | Proposition Text [GlintDoc]
+  | Proposition (Maybe Text) [GlintDoc]
+  | Lemma (Maybe Text) [GlintDoc]
   | Proof (Maybe Text) [GlintDoc]
 
   -- Lists, bool = ordered/unordered
@@ -62,6 +69,10 @@ data GlintDoc
 
   -- Tags
   | Tag Text [GlintDoc]
+
+  -- Diagramming langauges
+  | Render Text Text
+  | Table [[[GlintDoc]]]
 
   -- bibliography (move into document?)
   | Bib [Text]

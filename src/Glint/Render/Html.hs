@@ -1,16 +1,23 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use camelCase" #-}
 module Glint.Render.Html
   ( render
   , render_doc
   ) where
 
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import Text.Blaze.Html5 (Html, html, toHtml, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Glint.Syntax
 
-render_doc :: String -> GlintDocument -> Html
+  -- TODO: only load the modules (mathjax/node/tikz) that are needed!
+  -- TODO: graphviz based on render_https://github.com/magjac/d3-graphviz
+  -- also see
+  -- https://stackoverflow.com/questions/50432295/using-tikz-in-a-browser-like-mathjax
+  -- 
+render_doc :: Text -> GlintDocument -> Html
 render_doc root (GlintDocument {..}) = html $ do
   H.head $ do 
     H.title $ toHtml title
@@ -19,19 +26,38 @@ render_doc root (GlintDocument {..}) = html $ do
       ! A.id "MathJax-script"
       ! A.src "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
       $ pure ()
-    H.style $
-      "a {color: #83accc}" >>
-      "body {position: relative; width: 50%; left: 25%; color: #a8a7ab; background-color: #212025}" >>
-      ".tag {color: #aa4040}"
+    H.script
+      ! A.src (H.textValue $ root <> "/node_modules/d3/dist/d3.js")
+      $ pure ()
+    H.script
+      ! A.src (H.textValue $ root <> "/node_modules/@hpcc-js/wasm/dist/graphviz.umd.js")
+      $ pure ()
+    H.script
+      ! A.src (H.textValue $ root <> "/node_modules/d3-graphviz/build/d3-graphviz.js")
+      $ pure ()
     H.script $ do 
-      "MathJax = {processClass : 'math'} "
-  H.body $ mapM_ (render root) body
+      "MathJax = {"
+      " processClass : 'math',"
+      " loader: {load: ['[tex]/bussproofs']},"
+      " tex: {packages: {'[+]': ['bussproofs']}}"
+      "};"
+      ""
+      "function loadHook() {"
+      "  for (node of document.getElementsByClassName('dot')) {"
+      "    let txt = node.innerText; node.innerHTML = ''; d3.select(node).graphviz().renderDot(txt);"
+      "  }"
+      "}"
+    H.style $ do
+      "a {color: #83accc}"
+      "body {position: relative; width: 50%; left: 25%; color: #a8a7ab; background-color: #212025}"
+      "table {border-style: solid none; border-color: #83accc; border-width: 2px; border-collapse: collapse}"
+      ".quote {position: relative; left: 5%; color: #929096}"
+      ".tag {color: #aa4040}"
+  H.body ! A.onload "loadHook()" $ mapM_ (render 1 root) body
 
-render :: String -> GlintDoc -> Html
-render = render' 1 . pack
 
-render' :: Int -> Text -> GlintDoc -> Html
-render' depth root doc = case doc of 
+render :: Int -> Text -> GlintDoc -> Html
+render depth root doc = case doc of 
   Text tp text -> case tp of 
       Regular -> H.span $ toHtml text
       Bold -> H.b $ toHtml text
@@ -42,58 +68,77 @@ render' depth root doc = case doc of
 
   Section title nodes ->
     H.div ! A.class_ "section" $ do 
-      (header_n depth) (toHtml title)
-      mapM_ (render' (depth + 1) root) nodes
-  Paragraph nodes -> H.p $ mapM_ (render' depth root) nodes
+      header_n depth (toHtml title)
+      mapM_ (render (depth + 1) root) nodes
+  Paragraph nodes -> H.p $ mapM_ (render depth root) nodes
+  Quote text mauthor -> 
+    H.div ! A.class_ "quote" $ do
+      toHtml text
+      maybe (pure ()) (\v -> H.br >> toHtml (" -" <> v)) mauthor
+  Linebreak -> H.br
 
   List b children -> 
     (if b then H.ol else H.ul) $ do
       let render_child (mtitle, children) = 
             H.li $ do
               maybe (pure ()) (H.b . toHtml . (<> ": ")) mtitle  
-              mapM_ (render' depth root) children
+              mapM_ (render depth root) children
       mapM_ render_child children
 
   Tag typ children ->  
     H.p $ do
       H.b ! A.class_ "tag" $ toHtml (typ <> ": ")
-      mapM_ (render' depth root) children
+      mapM_ (render depth root) children
 
   Ref link text -> 
     H.a ! A.href (url link) $ toHtml text 
     where 
       url (DocLink txt) = H.textValue $ root <> "/" <> txt <> ".html" 
-      url (URLLink txt) = H.textValue $ txt
+      url (URLLink txt) = H.textValue txt
       
   Definition name children ->
-    H.p $ do
+    H.div $ do
       H.b "Definition"
       toHtml (" (" <> name <> "). ")
-      mapM_ (render' depth root) children
-  Proposition name children -> 
-    H.p $ do
+      mapM_ (render depth root) children
+  Proposition mname children -> 
+    H.div $ do
       H.b "Proposition"
-      toHtml (" (" <> name <> "). ")
-      mapM_ (render' depth root) children
+      toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
+      mapM_ (render depth root) children
+  Lemma mname children -> 
+    H.div $ do 
+      H.b "Lemma"
+      toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
+      mapM_ (render depth root) children
   Example mname _ children  -> 
-    H.p $ do
+    H.div $ do
       H.b "Example"
-      toHtml (maybe ". " (\name -> " (" <> name <> "). ") mname)
-      mapM_ (render' depth root) children
+      toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
+      mapM_ (render depth root) children
   Proof _ children -> 
-    H.p $ do
+    H.div $ do
       H.i "Proof: "
-      mapM_ (render' depth root) children
+      mapM_ (render depth root) children
   InlMath text -> 
     H.span ! A.class_ "math" $ toHtml ("\\(" <> text <> "\\)")
   BlockMath text -> 
     H.p ! A.class_ "math" $ toHtml ("\\[" <> text <> "\\]")
 
+  Render typ text -> 
+      H.div ! A.class_ (H.textValue typ) $ toHtml text
+
+  Table rows -> H.table $ mapM_ render_row rows
+    where
+      render_row = H.tr . mapM_ render_val
+      render_val = H.td . mapM_ (render depth root)
+
+
   Bib refs -> 
     H.div $ do
       H.h2 "Bibliography"
       H.ul $ mapM_ (H.li . toHtml) refs
-  
+
 
 header_n :: Int -> Html -> Html 
 header_n n = case n of 

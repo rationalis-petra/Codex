@@ -47,7 +47,7 @@ main = do
     Right val ->
       case runExcept (process_doc val) of 
         Right val -> 
-          writeFile (output_file options) (renderHtml $ render_doc (document_root options) val)
+          writeFile (output_file options) (renderHtml $ render_doc (pack $ document_root options) val)
         Left err -> putDocLn err
     Left err -> putDocLn err
 

@@ -25,6 +25,7 @@ process_doc (Node "title" _ _ body : ds) = do
       fold <$> mapM (either (throwError . ("Exptected text, got:" <+>) . pretty) pure) body
 process_doc ds = GlintDocument "" <$> mapM process ds
 
+
 process :: forall m. MonadError DocErr m => GlnRaw -> m GlintDoc
 process (Node typ args kwargs body) = 
   case typ of 
@@ -39,6 +40,8 @@ process (Node typ args kwargs body) =
     "b" -> Text Bold <$> get_text body
     "i" -> Text Italic <$> get_text body
     "mono" -> Text Monospace <$> get_text body
+    "quote" -> flip Quote (listToMaybe args) <$> get_text body
+    "br" -> pure $ Linebreak
 
     -- links
     "ref" -> Ref <$> (get_link <$> get_arg 0 args) <*> get_text body
@@ -46,7 +49,8 @@ process (Node typ args kwargs body) =
     -- math
     "def" -> Definition <$> get_arg 0 args <*> get_subnodes body
     "ex" -> Example (listToMaybe args) (lookup_kwarg "for" kwargs) <$> get_subnodes body
-    "prop" -> Proposition <$> get_arg 0 args <*> get_subnodes body
+    "prop" -> Proposition (listToMaybe args) <$> get_subnodes body
+    "lemma" -> Lemma (listToMaybe args) <$> get_subnodes body
     "proof" -> Proof (lookup_kwarg "for" kwargs) <$> get_subnodes body
     "m" -> InlMath <$> get_text body
     "M" -> BlockMath <$> get_text body
@@ -56,6 +60,8 @@ process (Node typ args kwargs body) =
     "ul" -> List False <$> get_list_els body
     -- dl
     "bib" -> Bib <$> get_bib_els body
+    "table" -> Table <$> get_table body
+    "render" -> Render <$> get_arg 0 args <*> get_text body
 
     _ -> case uncons typ of 
       Just ('#', tl) -> Tag tl <$> get_subnodes body
@@ -98,6 +104,16 @@ process (Node typ args kwargs body) =
         DocLink $ drop 4 text
       else 
         URLLink text
+
+    get_table :: [Either GlnRaw Text] -> m [[[GlintDoc]]]
+    get_table t = mapM (either get_rows (throwError . ("Exptected row element, got text:" <+>) . pretty)) t
+      where
+        get_rows (Node "row" _ _ body) = mapM (either get_val (throwError . ("Exptected val element, got text:" <+>) . pretty)) body
+        get_rows n = throwError $ "Exptected row element, got:" <> pretty n
+
+        get_val (Node "tv" _ _ body) = get_subnodes body 
+        get_val n = throwError $ "Exptected tv element, got:" <> pretty n
+
 
 
 lookup_kwarg :: Eq a => a -> [(a, b)] -> Maybe b
