@@ -51,6 +51,7 @@ process (Node typ args kwargs body) =
     "ex" -> Example (listToMaybe args) (lookup_kwarg "for" kwargs) <$> get_subnodes body
     "prop" -> Proposition (listToMaybe args) <$> get_subnodes body
     "lemma" -> Lemma (listToMaybe args) <$> get_subnodes body
+    "corollary" -> Corollary (listToMaybe args) <$> get_subnodes body
     "proof" -> Proof (lookup_kwarg "for" kwargs) <$> get_subnodes body
     "m" -> InlMath <$> get_text body
     "M" -> BlockMath <$> get_text body
@@ -62,6 +63,7 @@ process (Node typ args kwargs body) =
     "bib" -> Bib <$> get_bib_els body
     "table" -> Table <$> get_table body
     "render" -> Render <$> get_arg 0 args <*> get_text body
+    "code" -> Code <$> get_arg 0 args <*> get_text body
 
     _ -> case uncons typ of 
       Just ('#', tl) -> Tag tl <$> get_subnodes body

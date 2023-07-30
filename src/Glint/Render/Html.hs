@@ -21,6 +21,12 @@ render_doc :: Text -> GlintDocument -> Html
 render_doc root (GlintDocument {..}) = html $ do
   H.head $ do 
     H.title $ toHtml title
+    H.script $ do 
+      "MathJax = {"
+      " processClass : 'math',"
+      " loader: {load: ['[tex]/bussproofs']},"
+      " tex: {packages: {'[+]': ['bussproofs']}}"
+      "};"
     H.script ! A.src "https://polyfill.io/v3/polyfill.min.js?features=es6" $ pure ()
     H.script
       ! A.id "MathJax-script"
@@ -35,13 +41,15 @@ render_doc root (GlintDocument {..}) = html $ do
     H.script
       ! A.src (H.textValue $ root <> "/node_modules/d3-graphviz/build/d3-graphviz.js")
       $ pure ()
+    -- H.script 
+    --   ! A.src "http://tikzjax.com/v1/tikzjax.js"
+    --   $ pure ()
+    -- H.link
+    --   ! A.rel "stylesheet"
+    --   ! A.type_ "text/css"
+    --   ! A.href "http://tikzjax.com/v1/fonts.css"
+    --   $ pure ()
     H.script $ do 
-      "MathJax = {"
-      " processClass : 'math',"
-      " loader: {load: ['[tex]/bussproofs']},"
-      " tex: {packages: {'[+]': ['bussproofs']}}"
-      "};"
-      ""
       "function loadHook() {"
       "  for (node of document.getElementsByClassName('dot')) {"
       "    let txt = node.innerText; node.innerHTML = ''; d3.select(node).graphviz().renderDot(txt);"
@@ -50,9 +58,11 @@ render_doc root (GlintDocument {..}) = html $ do
     H.style $ do
       "a {color: #83accc}"
       "body {position: relative; width: 50%; left: 25%; color: #a8a7ab; background-color: #212025}"
-      "table {border-style: solid none; border-color: #83accc; border-width: 2px; border-collapse: collapse}"
+      "table {border-style: solid none; border-color: #83accc; border-width: 2px; border-collapse: collapse; margin: 20px}"
+      "td {padding: 2px 10px}"
       ".quote {position: relative; left: 5%; color: #929096}"
       ".tag {color: #aa4040}"
+      ".paragraph {margin: 1em 0em}"
   H.body ! A.onload "loadHook()" $ mapM_ (render 1 root) body
 
 
@@ -97,27 +107,32 @@ render depth root doc = case doc of
       url (URLLink txt) = H.textValue txt
       
   Definition name children ->
-    H.div $ do
+    H.div ! A.class_ "paragraph" $ do
       H.b "Definition"
       toHtml (" (" <> name <> "). ")
       mapM_ (render depth root) children
   Proposition mname children -> 
-    H.div $ do
+    H.div ! A.class_ "paragraph" $ do
       H.b "Proposition"
       toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
       mapM_ (render depth root) children
   Lemma mname children -> 
-    H.div $ do 
+    H.div ! A.class_ "paragraph" $ do 
       H.b "Lemma"
       toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
       mapM_ (render depth root) children
+  Corollary mname children -> 
+    H.div ! A.class_ "paragraph" $ do 
+      H.b "Corollary"
+      toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
+      mapM_ (render depth root) children
   Example mname _ children  -> 
-    H.div $ do
+    H.div ! A.class_ "paragraph" $ do
       H.b "Example"
       toHtml $ maybe ". " (\name -> " (" <> name <> "). ") mname
       mapM_ (render depth root) children
   Proof _ children -> 
-    H.div $ do
+    H.div ! A.class_ "paragraph" $ do
       H.i "Proof: "
       mapM_ (render depth root) children
   InlMath text -> 
@@ -127,6 +142,8 @@ render depth root doc = case doc of
 
   Render typ text -> 
       H.div ! A.class_ (H.textValue typ) $ toHtml text
+  Code typ text -> 
+      H.code ! A.class_ (H.textValue typ) $ toHtml text
 
   Table rows -> H.table $ mapM_ render_row rows
     where

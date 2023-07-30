@@ -63,6 +63,7 @@ data GlintDoc
   | Proposition (Maybe Text) [GlintDoc]
   | Lemma (Maybe Text) [GlintDoc]
   | Proof (Maybe Text) [GlintDoc]
+  | Corollary (Maybe Text) [GlintDoc]
 
   -- Lists, bool = ordered/unordered
   | List Bool [(Maybe Text, [GlintDoc])]
@@ -70,8 +71,9 @@ data GlintDoc
   -- Tags
   | Tag Text [GlintDoc]
 
-  -- Diagramming langauges
+  -- Diagramming and langauges
   | Render Text Text
+  | Code Text Text
   | Table [[[GlintDoc]]]
 
   -- bibliography (move into document?)
