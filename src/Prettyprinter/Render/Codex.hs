@@ -1,5 +1,5 @@
-module Prettyprinter.Render.Glint
-  ( GlintStyle
+module Prettyprinter.Render.Codex
+  ( CodexStyle
   , DocErr
   , Colour
   , putDoc
@@ -20,10 +20,10 @@ module Prettyprinter.Render.Glint
   , dull ) where
 
 
-{-------------------------- GLYPH PRETTY PRINTER STYLE -------------------------}
-{- This Module defines the GlintStyle type. This style is used throughout      -}
-{- Glint in Prettyprinter docs. While not representative of a specific         -}
-{- backedn, GlintStyle Documents can be converted to a variety of backends,    -}
+{-------------------------- Sigil. PRETTY PRINTER STYLE -------------------------}
+{- This Module defines the CodexStyle type. This style is used throughout      -}
+{- Codex in Prettyprinter docs. While not representative of a specific         -}
+{- backedn, CodexStyle Documents can be converted to a variety of backends,    -}
 {- including an ANSI terminal or HTML style.                                   -}
 {-------------------------------------------------------------------------------}
 
@@ -35,8 +35,8 @@ import qualified Prettyprinter.Render.Terminal as PPTerm
 {------------------------------------ TYPES ------------------------------------}
 
 
-newtype GlintStyle = GlintStyle PPTerm.AnsiStyle
-type DocErr = Doc GlintStyle
+newtype CodexStyle = CodexStyle PPTerm.AnsiStyle
+type DocErr = Doc CodexStyle
 
 type Colour = (Vividness, PPTerm.Color)
 data Vividness = Normal | Dull
@@ -45,32 +45,32 @@ data Vividness = Normal | Dull
 {---------------------------------- RENDERING ----------------------------------}
 
 
-putDoc :: Doc GlintStyle -> IO ()  
-putDoc doc = PPTerm.putDoc (reAnnotate (\(GlintStyle s) -> s) doc)
+putDoc :: Doc CodexStyle -> IO ()  
+putDoc doc = PPTerm.putDoc (reAnnotate (\(CodexStyle s) -> s) doc)
 
-putDocLn :: Doc GlintStyle -> IO ()  
+putDocLn :: Doc CodexStyle -> IO ()  
 putDocLn doc = putDoc doc >> putStrLn ""
 
 
 {-------------------------------- CREATE STYLES --------------------------------}
 
 
-bold :: GlintStyle  
-bold = GlintStyle PPTerm.bold
+bold :: CodexStyle  
+bold = CodexStyle PPTerm.bold
 
-italicized :: GlintStyle  
-italicized = GlintStyle PPTerm.italicized
+italicized :: CodexStyle  
+italicized = CodexStyle PPTerm.italicized
 
-underlined :: GlintStyle  
-underlined = GlintStyle PPTerm.underlined
+underlined :: CodexStyle  
+underlined = CodexStyle PPTerm.underlined
 
-fg_colour :: Colour -> GlintStyle
-fg_colour (v, c) = GlintStyle $ case v of 
+fg_colour :: Colour -> CodexStyle
+fg_colour (v, c) = CodexStyle $ case v of 
   Normal -> PPTerm.color c
   Dull -> PPTerm.colorDull c
 
-bg_colour :: Colour -> GlintStyle
-bg_colour (v, c) = GlintStyle $ case v of 
+bg_colour :: Colour -> CodexStyle
+bg_colour (v, c) = CodexStyle $ case v of 
   Normal -> PPTerm.bgColor c
   Dull -> PPTerm.bgColorDull c
 

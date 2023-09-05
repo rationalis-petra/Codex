@@ -6,10 +6,10 @@ import Control.Monad.Except(runExcept)
 import Options.Applicative
 import Text.Blaze.Html.Renderer.String
 
-import Prettyprinter.Render.Glint
-import Glint.Parse
-import Glint.Process
-import Glint.Render.Html
+import Prettyprinter.Render.Codex
+import Codex.Parse
+import Codex.Process
+import Codex.Render.Html
   
 
 data Options = Options { input_file :: String
@@ -39,11 +39,11 @@ main :: IO ()
 main = do
   options <- execParser $ info (opts <**> helper)
     ( fullDesc
-    <> progDesc "Process Glint Documents"
-    <> header "An implementation of the Glint Markup Langauge")
+    <> progDesc "Process Codex Documents"
+    <> header "An implementation of the Codex Markup Langauge")
   infile <- readFile $ input_file options
 
-  case runParser glint_doc (pack $ input_file options) (pack infile) of 
+  case runParser codex_doc (pack $ input_file options) (pack infile) of 
     Right val ->
       case runExcept (process_doc val) of 
         Right val -> 

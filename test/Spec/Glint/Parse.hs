@@ -1,14 +1,14 @@
-module Spec.Glint.Parse (parse_spec) where
+module Spec.Codex.Parse (parse_spec) where
 
 import Data.Text (Text)
 
 import Prettyprinter
-import Prettyprinter.Render.Glint
+import Prettyprinter.Render.Codex
 
 import TestFramework
 
-import Glint.Syntax
-import Glint.Parse
+import Codex.Syntax
+import Codex.Parse
 
 
 parse_spec :: TestGroup
@@ -23,7 +23,7 @@ parse_spec = TestGroup "document-parsing" $ Right
   where
     node_test :: Text -> Text -> GlnRaw -> Test
     node_test name text out =
-      case runParser glint name text of  
+      case runParser codex name text of  
         Right val ->
           if val == out then
             Test name Nothing

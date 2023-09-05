@@ -1,4 +1,4 @@
-module Spec.Glint.Render.Html () where
+module Spec.Codex.Render.Html () where
 
 
 

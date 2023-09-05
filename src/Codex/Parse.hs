@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-module Glint.Parse
+module Codex.Parse
   ( ParseOption(..)
-  , glint
-  , glint_doc
+  , codex
+  , codex_doc
   , runParser
   ) where
 
@@ -15,7 +15,7 @@ import Text.Megaparsec.Char
 import Text.Megaparsec hiding (runParser)
 import Prettyprinter  
 
-import Glint.Syntax
+import Codex.Syntax
 
 
 type Parser = Parsec Text Text
@@ -37,11 +37,11 @@ lexeme = L.lexeme sc
 
 -- symbol :: Text -> Parser Text
 -- symbol = L.symbol sc
-glint_doc :: Parser [GlnRaw]
-glint_doc = many1 glint <* eof
+codex_doc :: Parser [GlnRaw]
+codex_doc = many1 codex <* eof
 
-glint :: Parser GlnRaw
-glint = do 
+codex :: Parser GlnRaw
+codex = do 
   sc
   len <- lexeme $ length <$> many1 (char '[')
   name <- glname
@@ -50,7 +50,7 @@ glint = do
   -- TODO: preserve whitespace, for if text needs it 
   _ <- lexeme $ char '|'
   body <- many (try (Right <$> delimiters len)
-                <|> (Left <$> glint))
+                <|> (Left <$> codex))
     
   _ <- lexeme $ parsen (char ']') len
   pure $ Node name args kwargs body

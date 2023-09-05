@@ -1,4 +1,4 @@
-# Glint Directory
+# Codex Directory
 
 
 This directory contains an implementations of all major components of the Glide

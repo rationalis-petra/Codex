@@ -1,4 +1,4 @@
-# Changelog for `glint`
+# Changelog for `codex`
 
 All notable changes to this project will be documented in this file.
 

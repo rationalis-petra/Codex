@@ -25,9 +25,9 @@ module TestFramework (
 
 import Data.Text
 import Prettyprinter
-import Prettyprinter.Render.Glint
+import Prettyprinter.Render.Codex
 
 data TestGroup =
   TestGroup { _group_name :: Text, _children :: Either [TestGroup] [Test] }
 
-data Test = Test { _test_name :: Text, _result :: Maybe (Doc GlintStyle) }
+data Test = Test { _test_name :: Text, _result :: Maybe (Doc CodexStyle) }

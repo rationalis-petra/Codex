@@ -1,4 +1,4 @@
-module Glint.Process
+module Codex.Process
   ( process_doc
   , process
   ) where
@@ -10,23 +10,23 @@ import Data.Text (Text, uncons, take, drop)
 import Data.Maybe
 import Data.Foldable
 
-import Prettyprinter.Render.Glint
+import Prettyprinter.Render.Codex
 import Prettyprinter
-import Glint.Syntax
+import Codex.Syntax
 
-process_doc :: forall m. MonadError DocErr m => [GlnRaw] -> m GlintDocument
-process_doc [] = pure $ GlintDocument "" []
+process_doc :: forall m. MonadError DocErr m => [GlnRaw] -> m CodexDocument
+process_doc [] = pure $ CodexDocument "" []
 process_doc (Node "title" _ _ body : ds) = do
   title_text <- get_text body
-  (GlintDocument title_text . (Title title_text :)) <$> mapM process ds
+  (CodexDocument title_text . (Title title_text :)) <$> mapM process ds
   where 
     get_text :: [Either GlnRaw Text] -> m Text
     get_text body =
       fold <$> mapM (either (throwError . ("Exptected text, got:" <+>) . pretty) pure) body
-process_doc ds = GlintDocument "" <$> mapM process ds
+process_doc ds = CodexDocument "" <$> mapM process ds
 
 
-process :: forall m. MonadError DocErr m => GlnRaw -> m GlintDoc
+process :: forall m. MonadError DocErr m => GlnRaw -> m CodexDoc
 process (Node typ args kwargs body) = 
   case typ of 
     -- structure
@@ -75,14 +75,14 @@ process (Node typ args kwargs body) =
     get_text body =
       fold <$> mapM (either (throwError . ("Exptected text, got:" <+>) . pretty) pure) body
                             
-    get_subnodes :: [Either GlnRaw Text] -> m [GlintDoc]
+    get_subnodes :: [Either GlnRaw Text] -> m [CodexDoc]
     get_subnodes =
       mapM (either process (pure . Text Regular))
 
-    get_list_els :: [Either GlnRaw Text] -> m [(Maybe Text, [GlintDoc])]
+    get_list_els :: [Either GlnRaw Text] -> m [(Maybe Text, [CodexDoc])]
     get_list_els = mapM (either get_el (throwError . ("Exptected list element, got text:" <+>) . pretty))
       where
-        get_el :: GlnRaw -> m (Maybe Text, [GlintDoc])
+        get_el :: GlnRaw -> m (Maybe Text, [CodexDoc])
         get_el node = case node of 
           (Node "li" args _ body) -> ((,) (listToMaybe args) <$> get_subnodes body)
           _ -> throwError ("expected list item, got:" <+> pretty node)
@@ -107,7 +107,7 @@ process (Node typ args kwargs body) =
       else 
         URLLink text
 
-    get_table :: [Either GlnRaw Text] -> m [[[GlintDoc]]]
+    get_table :: [Either GlnRaw Text] -> m [[[CodexDoc]]]
     get_table t = mapM (either get_rows (throwError . ("Exptected row element, got text:" <+>) . pretty)) t
       where
         get_rows (Node "row" _ _ body) = mapM (either get_val (throwError . ("Exptected val element, got text:" <+>) . pretty)) body

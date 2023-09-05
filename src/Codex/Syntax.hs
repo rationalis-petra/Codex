@@ -1,7 +1,7 @@
-module Glint.Syntax
+module Codex.Syntax
   ( GlnRaw(..)
-  , GlintDocument(..)
-  , GlintDoc(..)
+  , CodexDocument(..)
+  , CodexDoc(..)
   , Lang(..)
   , TextProperty(..)
   , Link(..)
@@ -32,9 +32,9 @@ instance Pretty TextProperty where
     Italic -> "i"
     Monospace -> "mono"
 
-data GlintDocument = GlintDocument  
+data CodexDocument = CodexDocument  
   { title :: Text
-  , body :: [GlintDoc] }
+  , body :: [CodexDoc] }
 
 data Link = DocLink Text | URLLink Text
   deriving (Show, Ord, Eq)
@@ -42,11 +42,11 @@ data Link = DocLink Text | URLLink Text
 data Lang = Graphviz
   deriving (Show, Eq, Ord)
 
-data GlintDoc 
+data CodexDoc 
   -- structrue
-  = Section Text [GlintDoc]
+  = Section Text [CodexDoc]
   | Title Text
-  | Paragraph [GlintDoc]
+  | Paragraph [CodexDoc]
   | Quote Text (Maybe Text)
   -- Basic eleents of text & document structure
   | Text TextProperty Text
@@ -58,30 +58,30 @@ data GlintDoc
   | BlockMath Text
 
   -- Definitions, Examples
-  | Definition Text [GlintDoc]
-  | Example (Maybe Text) (Maybe Text) [GlintDoc]
-  | Proposition (Maybe Text) [GlintDoc]
-  | Lemma (Maybe Text) [GlintDoc]
-  | Proof (Maybe Text) [GlintDoc]
-  | Corollary (Maybe Text) [GlintDoc]
+  | Definition Text [CodexDoc]
+  | Example (Maybe Text) (Maybe Text) [CodexDoc]
+  | Proposition (Maybe Text) [CodexDoc]
+  | Lemma (Maybe Text) [CodexDoc]
+  | Proof (Maybe Text) [CodexDoc]
+  | Corollary (Maybe Text) [CodexDoc]
 
   -- Lists, bool = ordered/unordered
-  | List Bool [(Maybe Text, [GlintDoc])]
+  | List Bool [(Maybe Text, [CodexDoc])]
 
   -- Tags
-  | Tag Text [GlintDoc]
+  | Tag Text [CodexDoc]
 
   -- Diagramming and langauges
   | Render Text Text
   | Code Text Text
-  | Table [[[GlintDoc]]]
+  | Table [[[CodexDoc]]]
 
   -- bibliography (move into document?)
   | Bib [Text]
 
   deriving (Eq, Ord, Show)
 
-instance Pretty GlintDoc where
+instance Pretty CodexDoc where
   pretty node = case node of
     (Text prop text) -> "[" <> pretty prop <> "|" <> pretty text <> "]"
     (InlMath text) -> "[m|" <> pretty text <> "]"
